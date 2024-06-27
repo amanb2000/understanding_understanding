@@ -1,0 +1,16 @@
+
+
+# API stuff
+httpx
+asyncio
+
+
+# UI
+tqdm
+
+# LLMs
+anthropic
+
+# Data
+json
+jsonlines
