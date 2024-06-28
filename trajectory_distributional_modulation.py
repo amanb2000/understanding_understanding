@@ -29,6 +29,7 @@ def get_args():
     parser.add_argument('--u-max-char', type=int, default=100, help='Maximum number of characters in a control prompt. Defaults to 100')
     parser.add_argument('--output_dir', type=str, default='output.jsonl', help='Output directory. Defaults to output.jsonl')
     parser.add_argument('--temp', type=float, default=0.4, help='Temperature for sampling u_i. Defaults to 0.4')
+    parser.add_argument('--minf-timeout', type=int, default=300, help='Timeout for the minference CE loss endpoint. Defaults to 300 seconds')
     parser.add_argument('--num-iters', type=int, default=10, help='Number of iterations to generate new u_i. Defaults to 10')
     parser.add_argument('--out_dir', type=str, default='results/test00', help='Output directory for U and E. Defaults to results/test00')
 
@@ -98,8 +99,8 @@ async def create_llm_calls(client, U, base_sys_prompt, max_tokens, temp, num_alt
     prompts = await asyncio.gather(*tasks)
     return prompts
 
-async def get_ce_loss(context_string, corpus_string, u_i, question, url):
-    minf_client = httpx.AsyncClient()
+async def get_ce_loss(context_string, corpus_string, u_i, question, url, timeout=300):
+    minf_client = httpx.AsyncClient(timeout = timeout)
     ce_loss_json = await minf_client.post(
         url,
         json={
@@ -110,20 +111,21 @@ async def get_ce_loss(context_string, corpus_string, u_i, question, url):
     return {'u_i': u_i, 'question': question, 'answer': corpus_string, 'ce_loss': ce_loss_json.json()['loss']}
     #return ce_loss_json.json()
 
-async def create_ce_loss_tasks(x0_traj_list, u_i_list, url):
+async def create_ce_loss_tasks(x0_traj_list, u_i_list, url, timeout=300):
     tasks = []
     for x0_traj in x0_traj_list:
         for u_i in u_i_list:
             question = x0_traj[0]
             context_string = u_i + " " + question
             corpus_string = x0_traj[1]
-            tasks.append(get_ce_loss(context_string, corpus_string, u_i, question, url))
+            tasks.append(get_ce_loss(context_string, corpus_string, u_i, question, url, timeout=timeout))
     ce_loss = await asyncio.gather(*tasks)
     return ce_loss
 
 def get_embeds(qa_dataset_path:str, 
                u_i_list:list[str], 
-               minf_ce_url:str):
+               minf_ce_url:str, 
+               timeout=300):
     """
     Given a dataset of questions and answers `qa_dataset_path`, and a list of
     control prompts `u_i_list`, get the embeddings for the questions and
@@ -157,7 +159,7 @@ def get_embeds(qa_dataset_path:str,
         x0_traj_list = [[x0_traj['question'], ans] for ans in x0_traj['answers']]
 
 
-        ce_losses_json = asyncio.run(create_ce_loss_tasks(x0_traj_list, u_i_list, minf_ce_url))
+        ce_losses_json = asyncio.run(create_ce_loss_tasks(x0_traj_list, u_i_list, minf_ce_url, timeout=timeout))
         ce_losses.append(ce_losses_json)
 
         # ce_losses_json is a list of dicts with keys ['u_i', 'question', 'answer', 'ce_loss']
@@ -226,7 +228,7 @@ if __name__ == '__main__':
     # get the ce losses over the answers
     # E has shape [num_u, num_questions, num_answers]
     print(f"Getting embeddings (probability over answers) for the initial u_i's (length {len(u_i_list)})")
-    E, ce_losses = get_embeds(args.x0_traj_dataset, u_i_list, args.minf_ce_url)
+    E, ce_losses = get_embeds(args.x0_traj_dataset, u_i_list, args.minf_ce_url, timeout=args.minf_timeout)
     print("Done!\n")
 
     U = U + u_i_list
@@ -241,7 +243,7 @@ if __name__ == '__main__':
 
         # get the ce losses over the answers for the newly spawned u_i_list
         print(f"[ITER {i}] Getting embeddings (probability over answers) for the new u_i's (length {len(u_i_list)})")
-        embeds_i, ce_losses = get_embeds(args.x0_traj_dataset, u_i_list, args.minf_ce_url)
+        embeds_i, ce_losses = get_embeds(args.x0_traj_dataset, u_i_list, args.minf_ce_url, timeout=args.minf_timeout)
         flat_Ep_normd = F.normalize(embeds_i.reshape(embeds_i.shape[0], -1), p=2, dim=1)
 
         flat_E_normd = F.normalize(E.reshape(E.shape[0], -1), p=2, dim=1)
@@ -290,29 +292,3 @@ if __name__ == '__main__':
 
     print("Goodbye, have a nice day.")
 
-
-    # functionalize: 
-    # args: (path_to_qa, u_i_list:list[str], minf_ce_url:str)
-    #   u_i_list is a list of u' new strings/U strings we need the embeddings for
-    # return: tensor of shape [num_u_i, num_x0, num_answers]
-    #   where the order of u is given by u_i_list
-    # for line in x0_traj_dataset:
-    #     # x0_traj is a dictionary with keys: 
-    #     #   id:int
-    #     #   question:str
-    #     #   answers:list[str]
-    #     x0_traj = json.loads(line)
-
-    #     # [['question_1', 'answer_1'], ['question_1', 'answer_2']]
-    #     # this is reliably ordered with answer_ij (j) as the least significant figure
-    #     # and question_i as the most significant figure
-    #     x0_traj_list = [[x0_traj['question'], ans] for ans in x0_traj['answers']]
-
-    #     # Make call to minference to get CE loss
-    #     # list of dictionaries with keys: u_i, question, answer, ce_loss
-    #     ce_losses_json = asyncio.run(create_ce_loss_tasks(x0_traj_list, u_i_list, args.minf_ce_url))
-    #     pdb.set_trace()
-
-    #     for ce_loss in ce_losses_json:
-    #         print(ce_loss)
-    #         print('\n')
