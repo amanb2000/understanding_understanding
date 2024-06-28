@@ -1,4 +1,6 @@
-
+# numerics
+numpy 
+torch
 
 # API stuff
 httpx
@@ -12,5 +14,4 @@ tqdm
 anthropic
 
 # Data
-json
 jsonlines
