@@ -2,6 +2,10 @@ import torch
 import torch.nn.functional as F
 
 def calculate_purity(tensors, class_ids):
+    """
+    tensors: [batch, num_tokens, d_model] -- a given layer's internal reps
+    class_ids: tensor of shape [batch] -- the answers for each problem
+    """
     # Flatten the tensors along the num_tokens dimension
     tensors = tensors.view(tensors.size(0), -1)  # Shape: (Batch, num_tokens * d_model)
 
