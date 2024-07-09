@@ -84,8 +84,8 @@ cnt = 0
 for problem in tqdm(problems):
     input_ids = torch.tensor(problem).unsqueeze(0).to(model.device)
     with torch.no_grad():
-        outputs = model(input_ids, use_cache=True)
-        internal_reps.append(outputs['past_key_values'])
+        outputs = model(input_ids, use_cache=True, output_hidden_states=True)
+        internal_reps.append(outputs.hidden_states)
         logits.append(outputs['logits'].cpu())
 print("Done!\n")
 
