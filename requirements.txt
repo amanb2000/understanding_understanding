@@ -1,5 +1,6 @@
 # numerics
 numpy 
+umap-learn
 torch
 transformers
 accelerate
@@ -11,6 +12,9 @@ asyncio
 
 # UI
 tqdm
+plotly
+matplotlib
+kaleido
 
 # LLMs
 anthropic
