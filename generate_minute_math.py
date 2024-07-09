@@ -15,7 +15,16 @@ MODEL_NAME = "claude-3-5-sonnet-20240620"
 HF_MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 
-def generate_minute_math(num_unique_problems=100, min_problem=0, min_answer=15, max_answer=25):
+def generate_minute_math(num_unique_problems=100, 
+                         min_problem=0, 
+                         min_answer=15, 
+                         max_answer=25, 
+                         problem_type="xy"):
+    """
+    args: 
+        ...
+        problem_type: str, either "xy" for x + y style or "standard" for {num1} + {num2}
+    """
     problems = []
     answers = []
     for i in range(num_unique_problems):
@@ -29,7 +38,13 @@ def generate_minute_math(num_unique_problems=100, min_problem=0, min_answer=15, 
             temp = num1
             num1 = num2
             num2 = temp
-        problem = f"{num1} + {num2} ="
+        if problem_type == "standard":
+            problem = f"{num1} + {num2} = "
+        elif problem_type == "xy":
+            problem = f"x = {num1}, y = {num2}; therefore x + y = "
+        else:
+            raise ValueError(f"problem_type {problem_type} not recognized")
+
         problems.append(problem)
         answer = f"{num1 + num2}"
         answers.append(answer)
@@ -38,14 +53,23 @@ def generate_minute_math(num_unique_problems=100, min_problem=0, min_answer=15, 
     return problems, answers
 
 
-def generate_minute_math_with_tokenizer(tokenizer=None, num_unique_problems=100, min_problem=0, min_answer=15, max_answer=25):
+def generate_minute_math_with_tokenizer(tokenizer=None, 
+                                        num_unique_problems=100, 
+                                        min_problem=0, 
+                                        min_answer=15, 
+                                        max_answer=25, 
+                                        problem_type="xy"):
     # Create tokenizer
     if tokenizer is None:
         # throw error
         assert False, "Tokenizer is None"
 
     # Generate problems
-    problems, answers = generate_minute_math(num_unique_problems=num_unique_problems, min_problem=min_problem, min_answer=min_answer, max_answer=max_answer)
+    problems, answers = generate_minute_math(num_unique_problems=num_unique_problems, 
+                                             min_problem=min_problem, 
+                                             min_answer=min_answer, 
+                                             max_answer=max_answer, 
+                                             problem_type=problem_type)
 
     # Tokenize problems
     if type(tokenizer) == transformers.tokenization_utils_fast.PreTrainedTokenizerFast:
