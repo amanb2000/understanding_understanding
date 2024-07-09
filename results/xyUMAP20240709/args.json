@@ -1,0 +1,1 @@
+{"output_dir": "results/xyUMAP20240709", "model_name": "meta-llama/Meta-Llama-3-8B-Instruct", "num_unique_problems": 100, "min_answer": 15, "max_answer": 25, "min_problem": 0, "problem_type": "xy"}
