@@ -1,6 +1,8 @@
 # numerics
 numpy 
 torch
+transformers
+accelerate
 
 # API stuff
 httpx
