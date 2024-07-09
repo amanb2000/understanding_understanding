@@ -12,12 +12,13 @@ import argparse
 # args: min_problem=0 (minimum value for num1, num2=ans-num1)
 
 parser = argparse.ArgumentParser(description="Generate minute math dataset and store internal representation of model")
-parser.add_argument("--output_dir", type=str, help="Directory to store dataset and model representation")
-parser.add_argument("--model_name", type=str, default="meta-llama/Meta-Llama-3-8B-Instruct", help="Model name")
-parser.add_argument("--num_unique_problems", type=int, default=100, help="Number of unique problems")
-parser.add_argument("--min_answer", type=int, default=15, help="Minimum answer")
-parser.add_argument("--max_answer", type=int, default=25, help="Maximum answer")
-parser.add_argument("--min_problem", type=int, default=0, help="Minimum value for num1, num2=ans-num1")
+parser.add_argument("--output_dir", type=str, help="Directory to store dataset and model representation (required).")
+parser.add_argument("--model_name", type=str, default="meta-llama/Meta-Llama-3-8B-Instruct", help="Model name. Default=meta-llama/Meta-Llama-3-8B-Instruct")
+parser.add_argument("--num_unique_problems", type=int, default=100, help="Number of unique problems. Default=100")
+parser.add_argument("--min_answer", type=int, default=15, help="Minimum answer. Default=15")
+parser.add_argument("--max_answer", type=int, default=25, help="Maximum answer. Default=25")
+parser.add_argument("--min_problem", type=int, default=0, help="Minimum value for num1, num2=ans-num1. Default=0")
+parser.add_argument("--problem_type", type=str, default="xy", help="Problem type (xy or standard). Default=xy")
 args = parser.parse_args()
 
 import os
@@ -58,7 +59,11 @@ print("Done!\n")
 
 # Generate minute math dataset
 print("Generating minute math dataset...")
-problems, answers = generate_minute_math_with_tokenizer(tokenizer=tokenizer, num_unique_problems=args.num_unique_problems, min_problem=args.min_problem, min_answer=args.min_answer, max_answer=args.max_answer)
+problems, answers = generate_minute_math_with_tokenizer(tokenizer=tokenizer, 
+                                                        num_unique_problems=args.num_unique_problems, min_problem=args.min_problem, 
+                                                        min_answer=args.min_answer, 
+                                                        max_answer=args.max_answer, 
+                                                        problem_type=args.problem_type)
 print("Done!\n")
 
 
