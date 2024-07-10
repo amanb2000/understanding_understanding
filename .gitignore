@@ -1,3 +1,9 @@
+*.html
+*.png
+*.npy
+*.pt
+*.npz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
