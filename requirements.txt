@@ -1,5 +1,7 @@
 # numerics
 numpy 
+scikit-learn
+scipy
 umap-learn
 torch
 transformers
